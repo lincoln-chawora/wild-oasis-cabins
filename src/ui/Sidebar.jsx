@@ -13,9 +13,10 @@ const StyledSidebar = styled.aside`
   gap: 3.2rem;
 `
 
-export function Sidebar() {
+export function Sidebar({isShowing, toggleSidebar}) {
     return (
         <StyledSidebar>
+            <span onClick={() => toggleSidebar(!isShowing)}>x</span>
             <Logo />
             <MainNav />
         </StyledSidebar>
