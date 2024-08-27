@@ -1,8 +1,8 @@
 import styled from "styled-components";
-import {useQuery} from "@tanstack/react-query";
 import {getCabins} from "../../services/apiCabins.js";
 import Spinner from "../../ui/Spinner.jsx";
 import CabinRow from "./CabinRow.jsx";
+import {useCustomQuery} from "../../hooks/useCustomQuery.js";
 
 const Table = styled.div`
   border: 1px solid var(--color-grey-200);
@@ -29,11 +29,7 @@ const TableHeader = styled.header`
 `;
 
 function CabinTable() {
-    // This custom hooks queryFn needs a function that returns a promise.
-    const {isLoading, data: cabins, error} = useQuery({
-        queryKey: ['cabins'],
-        queryFn: getCabins
-    });
+    const {data: cabins, isLoading } = useCustomQuery(undefined, getCabins);
 
     if (isLoading) return <Spinner />;
 
