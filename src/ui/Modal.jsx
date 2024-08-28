@@ -1,6 +1,8 @@
 import styled from "styled-components";
 import {HiXMark} from "react-icons/hi2";
 import {createPortal} from "react-dom";
+import {cloneElement, createContext, useContext, useState} from "react";
+import {useOutsideClick} from "../hooks/useOutsideClick.js";
 
 const StyledModal = styled.div`
   position: fixed;
@@ -51,19 +53,84 @@ const Button = styled.button`
   }
 `;
 
-function Modal({children, onClose}) {
-    // Create portal renders the modal inside the document body or any specific element.
+export const ModalContext = createContext();
+
+/**
+ * Modal component, has the openName state, which controls the content that's opened. Uses context provider to pass
+ * state values and function to child components.
+ * @param children
+ *  The contents to be displayed inside the modal.
+ * @returns {JSX.Element}
+ * @constructor
+ */
+function Modal({children}) {
+    const [openName, setOpenName] = useState("");
+    // Sets open name to empty.
+    const closeModal = () => setOpenName("");
+
+    return (
+        <ModalContext.Provider value={{setOpenName, closeModal, openName}}>
+            {children}
+        </ModalContext.Provider>
+    )
+}
+
+/**
+ * The modal open component, responsible for setting the openName state value using the "opens/contentName".
+ * @param children
+ *  The contents to be displayed inside the Modal.Open component.
+ * @param opens|opensContentName
+ *  The value of the "opens" prop where the Modal.Open component is defined.
+ * @returns {React.DetailedReactHTMLElement<{onClick: (function(): *)}, HTMLElement>}
+ * @constructor
+ */
+function Open({children, opens: contentName}) {
+    // Get setOpenName function from context, so we can set the state from outside the modal component.
+    const {setOpenName} = useContext(ModalContext);
+
+    // Clone the children element (what's inside <Modal.Open></Modal.Open>), and then we add the onClick prop onto it
+    // with the setOpenName function, so that when the button is clicked, the openName state becomes the value passed
+    // through the function (contentName) in this case.
+    return cloneElement(children, {onClick: () => setOpenName(contentName)});
+}
+
+/**
+ * The modal content component, responsible for display the contents of the modal.
+ * @param children
+ *  The contents to be displayed inside the Modal.Content component.
+ * @param name
+ *  The value of the "name" prop where the Modal.Content component is defined. This is used by the "opens" props
+ *  on the Modal.Open component to open the corresponding content.
+ * @returns {React.ReactPortal|null}
+ * @constructor
+ */
+function Content({children, name}) {
+    // Get openName state value and close function from context.
+    const {openName, closeModal} = useContext(ModalContext);
+
+    const ref = useOutsideClick(closeModal);
+
+    // If the value of the name prop isn't the same as the openName state value, don't do anything.
+    if (name !== openName) return null;
+    // Create portal renders the modal inside the document body on the specified element (document.body).
     return createPortal(
         <Overlay>
-            <StyledModal>
-                <Button onClick={onClose}><HiXMark /></Button>
-                <div>
-                    {children}
-                </div>
+            <StyledModal ref={ref}>
+                <Button onClick={closeModal}>
+                    <HiXMark />
+                </Button>
+                {/* Clone the children inside <Modal.Content> and pass the close function through the onCloseModal prop
+                  so that, the modal can be closed from a component a few levels inside it. */}
+                {cloneElement(children, {onCloseModal: closeModal})}
             </StyledModal>
-        </Overlay>,
+        </Overlay>
+        ,
         document.body
     );
 }
 
-export default Modal
+// Set Content and Open components as properties on the Modal component. This is what allows us to do <Modal.Open>.
+Modal.Content = Content;
+Modal.Open = Open;
+
+export default Modal;

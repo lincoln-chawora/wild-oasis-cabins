@@ -1,20 +1,19 @@
 import Button from "../../ui/Button.jsx";
 import CreateEditCabinForm from "./CreateEditCabinForm.jsx";
-import {useState} from "react";
 import Modal from "../../ui/Modal.jsx";
 
 export function AddCabin() {
-    const [isOpenModal, setIsOpenModal] = useState(false);
-
     return (
-        <>
-            <Button onClick={() => setIsOpenModal((show) => !show)}>Add new cabin</Button>
-
-            {isOpenModal &&
-                <Modal onClose={() => setIsOpenModal(false)}>
-                    <CreateEditCabinForm onCloseModal={() => setIsOpenModal(false)} />
-                </Modal>
-            }
-        </>
+        <div>
+            {/* Main modal component, children include open button and content which the button opens. */}
+            <Modal>
+                <Modal.Open opens="cabin-form">
+                    <Button>Add new cabin</Button>
+                </Modal.Open>
+                <Modal.Content name="cabin-form">
+                    <CreateEditCabinForm />
+                </Modal.Content>
+            </Modal>
+        </div>
     )
 }

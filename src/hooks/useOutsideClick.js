@@ -1,0 +1,21 @@
+import {useEffect, useRef} from "react";
+
+export function useOutsideClick(handler) {
+    const ref = useRef();
+
+    useEffect(() => {
+        function handleClick(e) {
+            e.preventDefault();
+
+            if (ref.current && !ref.current.contains(e.target)) {
+                handler();
+            }
+        }
+
+        document.addEventListener('click', handleClick, true);
+
+        return () => document.removeEventListener('click', handleClick);
+    }, [handler])
+
+    return ref;
+}
