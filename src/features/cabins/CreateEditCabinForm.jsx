@@ -8,7 +8,7 @@ import {createEditCabin} from "../../services/apiCabins.js";
 import FormRow from "../../ui/FormRow.jsx";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
 
-function CreateEditCabinForm({cabinToEdit = {}}) {
+function CreateEditCabinForm({cabinToEdit = {}, onCloseModal}) {
     const { id: editId, ...editValues } = cabinToEdit;
     const isEditSession = Boolean(editId);
 
@@ -27,10 +27,17 @@ function CreateEditCabinForm({cabinToEdit = {}}) {
         const image = typeof data.image === 'string' ? data.image : data.image[0];
 
         if(isEditSession) {
-            editCabin({newCabinData: {...data, image}, id: editId});
+            editCabin({newCabinData: {...data, image}, id: editId}, {
+                onSuccess: () => {
+                    onCloseModal?.();
+                },
+            });
         } else {
             createCabin({...data, image}, {
-                onSuccess: () => reset(),
+                onSuccess: () => {
+                    reset();
+                    onCloseModal?.();
+                },
             });
         }
     }
@@ -42,7 +49,7 @@ function CreateEditCabinForm({cabinToEdit = {}}) {
     }
 
     return (
-        <Form onSubmit={handleSubmit(onSubmit, onError)}>
+        <Form onSubmit={handleSubmit(onSubmit, onError)} type={onCloseModal? 'modal' : 'regular'}>
             <FormRow label="Cabin name" error={errors?.name?.message}>
               <Input type="text" id="name" disabled={isWorking} {...register("name", {
                   required: "This field is required"
@@ -93,7 +100,7 @@ function CreateEditCabinForm({cabinToEdit = {}}) {
             </FormRow>
 
             <FormRow>
-                <Button variation="secondary" type="reset">Cancel</Button>
+                <Button variation="secondary" type="reset" onClick={() => onCloseModal?.()}>Cancel</Button>
                 <Button disabled={isWorking}>
                     {isWorking ? 'Processing...' : isEditSession ? 'Edit cabin' : 'Create new cabin'}
                 </Button>
