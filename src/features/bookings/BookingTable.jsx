@@ -1,9 +1,17 @@
 import BookingRow from "./BookingRow.jsx";
 import Table from "../../ui/Table.jsx";
 import Menus from "../../ui/Menus.jsx";
+import {useCustomQuery} from "../../hooks/useCustomQuery.js";
+import {getBookings} from "../../services/apiBookings.js";
+import Spinner from "../../ui/Spinner.jsx";
+import Empty from "../../ui/Empty.jsx";
 
 function BookingTable() {
-  const bookings = [];
+  const {data: bookings, isLoading } = useCustomQuery('bookings', getBookings,  true);
+
+  if (isLoading) return <Spinner />;
+
+  if (!bookings.length) return <Empty resource="bookings" />;
 
   return (
     <Menus>

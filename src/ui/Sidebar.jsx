@@ -2,6 +2,7 @@ import styled from "styled-components";
 import Logo from "./Logo.jsx";
 import MainNav from "./MainNav.jsx";
 import {HiArrowRight, HiX} from "react-icons/hi";
+import Uploader from "../data/Uploader.jsx";
 
 const StyledSidebar = styled.aside`
   background-color: var(--color-grey-0);
@@ -20,6 +21,7 @@ export function Sidebar({isShowing, toggleSidebar}) {
             <span onClick={() => toggleSidebar(!isShowing)}>{isShowing ? <HiX /> : <HiArrowRight />}</span>
             <Logo />
             <MainNav />
+            <Uploader />
         </StyledSidebar>
     )
 }

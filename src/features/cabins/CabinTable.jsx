@@ -5,12 +5,15 @@ import {useCustomQuery} from "../../hooks/useCustomQuery.js";
 import Table from "../../ui/Table.jsx";
 import Menus from "../../ui/Menus.jsx";
 import {useSearchParams} from "react-router-dom";
+import Empty from "../../ui/Empty.jsx";
 
 function CabinTable() {
     const [searchParams] = useSearchParams();
-    const {data: cabins, isLoading } = useCustomQuery(undefined, getCabins);
+    const {data: cabins, isLoading } = useCustomQuery('cabins', getCabins);
 
     if (isLoading) return <Spinner />;
+
+    if (!cabins.length) return <Empty resource="cabins" />;
 
     const filterValue = searchParams.get('discount') || 'all';
 
