@@ -7,26 +7,16 @@ import {HiSquare2Stack} from "react-icons/hi2";
 import {HiPencil, HiTrash} from "react-icons/hi";
 import Modal from "../../ui/Modal.jsx";
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
-
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 0.6fr 1.8fr 2.2fr 1fr 1fr 1fr;
-  column-gap: 2.4rem;
-  align-items: center;
-  padding: 1.4rem 2.4rem;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--color-grey-100);
-  }
-`;
+import Table from "../../ui/Table.jsx";
 
 const Img = styled.img`
   display: block;
-  width: 6.4rem;
+  width: ${(props) => props.size == 'small' ? '6.4rem' : '30rem'};
   aspect-ratio: 3 / 2;
   object-fit: cover;
   object-position: center;
   transform: scale(1.5) translateX(-7px);
+  cursor: pointer;
 `;
 
 const Cabin = styled.div`
@@ -46,6 +36,10 @@ const Discount = styled.div`
   font-weight: 500;
   color: var(--color-green-700);
 `;
+
+Img.defaultProps = {
+    size: "small",
+};
 
 function CabinRow({cabin}) {
     const {id: cabinId, name, maxCapacity, regularPrice, discount, image, description} = cabin;
@@ -72,13 +66,19 @@ function CabinRow({cabin}) {
     }
 
     return (
-        <>
-            <TableRow role="row">
-                <Img src={image} />
+        <Table.Row>
+                <Modal>
+                    <Modal.Open opens="cabin-image">
+                        <Img title="Enlarge image" src={image} />
+                    </Modal.Open>
+                    <Modal.Content name="cabin-image">
+                        <Img size="large" src={image} />
+                    </Modal.Content>
+                </Modal>
                 <Cabin>{name}</Cabin>
                 <div>Fits up to {maxCapacity} guests</div>
                 <Price>{formatCurrency(regularPrice)}</Price>
-                {discount ? <Price>{formatCurrency(discount)}</Price> : <span>&mdash;</span>}
+                {discount ? <Discount>{formatCurrency(discount)}</Discount> : <span>&mdash;</span>}
                 <div>
                     <button title="Duplicate cabin" onClick={handleDuplicate} disabled={isCreating}><HiSquare2Stack /></button>
                     <Modal>
@@ -97,8 +97,7 @@ function CabinRow({cabin}) {
                         </Modal.Content>
                     </Modal>
                 </div>
-            </TableRow>
-        </>
+        </Table.Row>
     )
 }
 
