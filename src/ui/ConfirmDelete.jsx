@@ -1,6 +1,8 @@
 import styled from "styled-components";
 import Button from "./Button.jsx";
 import Heading from "./Heading";
+import {useContext} from "react";
+import {ModalContext} from "./Modal.jsx";
 
 const StyledConfirmDelete = styled.div`
   width: 40rem;
@@ -20,7 +22,9 @@ const StyledConfirmDelete = styled.div`
   }
 `;
 
-function ConfirmDelete({ resourceName, onConfirm, disabled, onClose }) {
+function ConfirmDelete({ resourceName, onConfirm, disabled }) {
+    const {closeModal} = useContext(ModalContext);
+
   return (
     <StyledConfirmDelete>
       <Heading as="h3">Delete {resourceName}</Heading>
@@ -30,7 +34,7 @@ function ConfirmDelete({ resourceName, onConfirm, disabled, onClose }) {
       </p>
 
       <div>
-        <Button variation="secondary" disabled={disabled} onClick={onClose}>
+        <Button variation="secondary" disabled={disabled} onClick={closeModal}>
           Cancel
         </Button>
         <Button variation="danger" disabled={disabled} onClick={onConfirm}>
