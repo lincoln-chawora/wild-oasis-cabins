@@ -10,9 +10,11 @@ import ButtonText from "../../ui/ButtonText.jsx";
 
 import { useMoveBack } from "../../hooks/useMoveBack.js";
 import {useCustomQuery} from "../../hooks/useCustomQuery.js";
-import {getBooking} from "../../services/apiBookings.js";
+import {getBooking, updateBooking} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import {useNavigate, useParams} from "react-router-dom";
+import {HiArrowUpOnSquare} from "react-icons/hi2";
+import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -25,6 +27,13 @@ function BookingDetail() {
     const moveBack = useMoveBack();
     const {bookingId} = useParams();
     const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingId});
+
+    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('booking', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+
+    function handleCheckout() {
+        const obj = {status: 'checked-out'};
+        checkout({id: bookingId, obj});
+    }
 
     if (isLoading) return <Spinner />;
 
@@ -52,6 +61,11 @@ function BookingDetail() {
           {status === 'unconfirmed' && (
               <Button onClick={() => navigate(`/checkin/${bookingId}`)}>Check in</Button>
           )}
+
+          {status === 'checked-in' && (
+              <Button disabled={isCheckingOut} onClick={handleCheckout} icon={<HiArrowUpOnSquare />}>Check out</Button>
+          )}
+
         <Button variation="secondary" onClick={moveBack}>
           Back
         </Button>

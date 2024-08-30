@@ -9,7 +9,9 @@ import { formatDistanceFromNow } from "../../utils/helpers.js";
 import Menus from "../../ui/Menus.jsx";
 import {HiEye} from "react-icons/hi";
 import {useNavigate} from "react-router-dom";
-import {HiArrowDownOnSquare} from "react-icons/hi2";
+import {HiArrowDownOnSquare, HiArrowUpOnSquare} from "react-icons/hi2";
+import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
+import {updateBooking} from "../../services/apiBookings.js";
 
 const Cabin = styled.div`
   font-size: 1.6rem;
@@ -52,13 +54,20 @@ function BookingRow({
     cabins: { name: cabinName },
   },
 }) {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
-  const statusToTagName = {
-    unconfirmed: "blue",
-    "checked-in": "green",
-    "checked-out": "silver",
-  };
+    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('bookings', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+
+    function handleCheckout() {
+        const obj = {status: 'checked-out'};
+        checkout({id: bookingId, obj});
+    }
+
+    const statusToTagName = {
+        unconfirmed: "blue",
+        "checked-in": "green",
+        "checked-out": "silver",
+    };
 
   return (
     <Table.Row>
@@ -92,6 +101,10 @@ function BookingRow({
                 <Menus.Button onClick={() => navigate(`/bookings/${bookingId}`)} icon={<HiEye />}>See Details</Menus.Button>
                 {status === 'unconfirmed' && (
                     <Menus.Button onClick={() => navigate(`/checkin/${bookingId}`)} icon={<HiArrowDownOnSquare />}>Check in</Menus.Button>
+                )}
+
+                {status === 'checked-in' && (
+                    <Menus.Button disabled={isCheckingOut} onClick={handleCheckout} icon={<HiArrowUpOnSquare />}>Check out</Menus.Button>
                 )}
             </Menus.List>
         </Menus.Menu>
