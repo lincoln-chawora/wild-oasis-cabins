@@ -10,7 +10,7 @@ export async function getCabins() {
         throw new Error('Cabins could not be loaded');
     }
 
-    return data;
+    return {data};
 }
 
 export async function deleteCabin(id) {

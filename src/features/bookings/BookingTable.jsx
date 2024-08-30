@@ -5,9 +5,10 @@ import {useCustomQuery} from "../../hooks/useCustomQuery.js";
 import {getBookings} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import Empty from "../../ui/Empty.jsx";
+import Pagination from "../../ui/Pagination";
 
 function BookingTable() {
-  const {data: bookings, isLoading } = useCustomQuery('bookings', getBookings,  true);
+  const {result: bookings, isLoading, count } = useCustomQuery('bookings', getBookings,  true);
 
   if (isLoading) return <Spinner />;
 
@@ -31,6 +32,10 @@ function BookingTable() {
             <BookingRow key={booking.id} booking={booking} />
           )}
         />
+
+        <Table.Footer>
+          <Pagination count={count} />
+        </Table.Footer>
       </Table>
     </Menus>
   );

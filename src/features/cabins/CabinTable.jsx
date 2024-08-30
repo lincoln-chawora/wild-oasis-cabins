@@ -9,7 +9,7 @@ import Empty from "../../ui/Empty.jsx";
 
 function CabinTable() {
     const [searchParams] = useSearchParams();
-    const {data: cabins, isLoading } = useCustomQuery('cabins', getCabins);
+    const {result: cabins, isLoading } = useCustomQuery('cabins', getCabins);
 
     if (isLoading) return <Spinner />;
 
