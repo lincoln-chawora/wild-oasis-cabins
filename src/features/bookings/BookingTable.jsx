@@ -1,14 +1,14 @@
 import BookingRow from "./BookingRow.jsx";
 import Table from "../../ui/Table.jsx";
 import Menus from "../../ui/Menus.jsx";
-import {useCustomQuery} from "../../hooks/useCustomQuery.js";
 import {getBookings} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import Empty from "../../ui/Empty.jsx";
 import Pagination from "../../ui/Pagination";
+import {useCustomFilteredQuery} from "../../hooks/useCustomFilteredQuery.js";
 
 function BookingTable() {
-  const {result: bookings, isLoading, count } = useCustomQuery('bookings', getBookings,  true);
+  const {result: bookings, isLoading, count } = useCustomFilteredQuery('bookings', getBookings);
 
   if (isLoading) return <Spinner />;
 

@@ -1,48 +1,15 @@
-import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {useSearchParams} from "react-router-dom";
-import {PAGE_SIZE} from "../utils/constants.js";
+import {useQuery} from "@tanstack/react-query";
 
-export function useCustomQuery(qKey, mFn, isFiltered = false) {
-    const queryClient = useQueryClient();
-    const [searchParams] = useSearchParams();
-
-    // FILTER.
-    const filterValue = searchParams.get('status');
-    const filter = !isFiltered || !filterValue || filterValue === 'all'
-        ? null
-        : { field: 'status', value: filterValue };
-
-    // SORT.
-    const sortByRaw = searchParams.get('sortBy') || 'startDate-desc';
-    const [field, direction] = sortByRaw.split('-');
-    const sortBy = isFiltered ? {field, direction} : null;
-
-    // PAGINATION.
-    const page = !searchParams.get('page') ? 1 : Number(searchParams.get('page'));
+export function useCustomQuery(qKey, mFn, params = {}) {
     // This custom hooks queryFn needs a function that returns a promise.
     const {
         isLoading,
         data: {data: result, count} = {},
         error
     } = useQuery({
-        queryKey: [qKey, filter, sortBy, page],
-        queryFn: () => mFn({filter, sortBy, page})
+        queryKey: [qKey, params.id],
+        queryFn: () => mFn(params.id)
     });
-
-    const pageCount = Math.ceil(count / PAGE_SIZE);
-    if (page < pageCount) {
-        queryClient.prefetchQuery({
-            queryKey: [qKey, filter, sortBy, page + 1],
-            queryFn: () => mFn({filter, sortBy, page: page + 1})
-        })
-    }
-
-    if (page > 1) {
-        queryClient.prefetchQuery({
-            queryKey: [qKey, filter, sortBy, page - 1],
-            queryFn: () => mFn({filter, sortBy, page: page - 1})
-        })
-    }
 
     return {result, isLoading, error, count};
 }

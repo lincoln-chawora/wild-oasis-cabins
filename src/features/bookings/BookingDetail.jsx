@@ -9,6 +9,10 @@ import Button from "../../ui/Button.jsx";
 import ButtonText from "../../ui/ButtonText.jsx";
 
 import { useMoveBack } from "../../hooks/useMoveBack.js";
+import {useCustomQuery} from "../../hooks/useCustomQuery.js";
+import {getBooking} from "../../services/apiBookings.js";
+import Spinner from "../../ui/Spinner.jsx";
+import {useNavigate, useParams} from "react-router-dom";
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -17,22 +21,26 @@ const HeadingGroup = styled.div`
 `;
 
 function BookingDetail() {
-  const booking = {};
-  const status = "checked-in";
+    const navigate = useNavigate();
+    const moveBack = useMoveBack();
+    const {bookingId} = useParams();
+    const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingId});
 
-  const moveBack = useMoveBack();
+    if (isLoading) return <Spinner />;
 
-  const statusToTagName = {
-    unconfirmed: "blue",
-    "checked-in": "green",
-    "checked-out": "silver",
-  };
+    const {status, id} = booking;
+
+    const statusToTagName = {
+        unconfirmed: "blue",
+        "checked-in": "green",
+        "checked-out": "silver",
+    };
 
   return (
     <>
       <Row type="horizontal">
         <HeadingGroup>
-          <Heading as="h1">Booking #X</Heading>
+          <Heading as="h1">Booking #{id}</Heading>
           <Tag type={statusToTagName[status]}>{status.replace("-", " ")}</Tag>
         </HeadingGroup>
         <ButtonText onClick={moveBack}>&larr; Back</ButtonText>
@@ -41,6 +49,9 @@ function BookingDetail() {
       <BookingDataBox booking={booking} />
 
       <ButtonGroup>
+          {status === 'unconfirmed' && (
+              <Button onClick={() => navigate(`/checkin/${bookingId}`)}>Check in</Button>
+          )}
         <Button variation="secondary" onClick={moveBack}>
           Back
         </Button>
