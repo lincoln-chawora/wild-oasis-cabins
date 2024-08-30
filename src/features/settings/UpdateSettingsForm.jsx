@@ -10,7 +10,7 @@ import {updateSetting as updateSettingApi} from "../../services/apiSettings.js";
 function UpdateSettingsForm() {
     const {
         isLoading,
-        data: {
+        result: {
             breakfastPrice, maxBookingLength, minBookingLength, maxGuestsPerBooking
         } = {},
     } = useCustomQuery('settings', getSettings);

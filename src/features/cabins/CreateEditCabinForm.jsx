@@ -17,9 +17,9 @@ function CreateEditCabinForm({cabinToEdit = {}, onCloseModal}) {
     });
     const {errors} = formState;
 
-    const {mutate: createCabin, isLoading: isCreating} = useCustomQueryClient(undefined, createEditCabin, 'New cabin successfully created.')
+    const {mutate: createCabin, isLoading: isCreating} = useCustomQueryClient('cabins', createEditCabin, 'New cabin successfully created.')
 
-    const {mutate: editCabin, isLoading: isEditing} = useCustomQueryClient(undefined, ({newCabinData, id}) => createEditCabin(newCabinData, id), `Cabin ${getValues().name} successfully edited.`)
+    const {mutate: editCabin, isLoading: isEditing} = useCustomQueryClient('cabins', ({newCabinData, id}) => createEditCabin(newCabinData, id), `Cabin ${getValues().name} successfully edited.`)
 
     const isWorking = isCreating || isEditing;
 

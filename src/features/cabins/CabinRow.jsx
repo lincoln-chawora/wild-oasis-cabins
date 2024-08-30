@@ -48,12 +48,12 @@ function CabinRow({cabin}) {
     const {
         mutate: deleteCabinById,
         isLoading: isDeleting
-    } = useCustomQueryClient(undefined, deleteCabin, `Cabin ${name} successfully deleted.`)
+    } = useCustomQueryClient('cabins', deleteCabin, `Cabin ${name} successfully deleted.`)
 
     const {
         mutate: duplicateCabin,
         isLoading: isCreating
-    } = useCustomQueryClient(undefined, createEditCabin, `Cabin ${name} successfully duplicated.`)
+    } = useCustomQueryClient('cabins', createEditCabin, `Cabin ${name} successfully duplicated.`)
     
     function handleDuplicate() {
         duplicateCabin({

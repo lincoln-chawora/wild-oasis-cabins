@@ -16,6 +16,7 @@ import {useEffect, useState} from "react";
 import Checkbox from "../../ui/Checkbox.jsx";
 import {formatCurrency} from "../../utils/helpers.js";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
+import {getSettings} from "../../services/apiSettings.js";
 
 const Box = styled.div`
   /* Box */
@@ -28,9 +29,17 @@ const Box = styled.div`
 function CheckinBooking() {
     const navigate = useNavigate();
     const [confirmPaid, setConfirmPaid] = useState(false);
+    const [addBreakfast, setAddBreakfast] = useState(false);
     const {bookingId: bookingID} = useParams();
     const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingID});
     const {mutate: checkin, isLoading: isCheckingIn} = useCustomQueryClient('booking', ({id, obj}) => updateBooking(id, obj), `${booking?.guests?.fullName} has been checked in.`)
+
+    const {
+        isLoading: isLoadingSettings,
+        result: {
+            breakfastPrice,
+        } = {},
+    } = useCustomQuery('settings', getSettings);
 
     useEffect(() => {
         setConfirmPaid(booking?.isPaid ?? false);
@@ -38,7 +47,7 @@ function CheckinBooking() {
 
     const moveBack = useMoveBack();
 
-    if (isLoading) return <Spinner />;
+    if (isLoading || isLoadingSettings) return <Spinner />;
 
     const {
         id: bookingId,
@@ -50,16 +59,32 @@ function CheckinBooking() {
         isPaid
     } = booking;
 
+    const optionalBreakfastPrice = breakfastPrice * numNights * numGuests;
+
   function handleCheckin() {
       if (!confirmPaid) return;
+      const obj = {status: 'checked-in', isPaid: true};
+      if (addBreakfast) {
+          const breakfast = {
+              hasBreakfast: true,
+              extrasPrice: optionalBreakfastPrice,
+              totalPrice: totalPrice + optionalBreakfastPrice
+          };
+          // Merge breakfast into obj.
+          Object.assign(obj, breakfast);
+          checkin({id: bookingId, obj }, {
+              onSuccess: () => {
+                  navigate("/");
+              },
+          });
+      } else {
+          checkin({id: bookingId, obj}, {
+              onSuccess: () => {
+                  navigate("/");
+              },
+          });
+      }
 
-      const obj = { status: 'checked-in', isPaid: true};
-
-      checkin({id: bookingId, obj}, {
-          onSuccess: () => {
-              navigate("/");
-          },
-      });
   }
 
   return (
@@ -70,14 +95,27 @@ function CheckinBooking() {
       </Row>
 
       <BookingDataBox booking={booking} />
-
+        {!hasBreakfast && (
+            <Box>
+                <Checkbox
+                    id="breakfast"
+                    checked={addBreakfast}
+                    disabled={isCheckingIn}
+                    onChange={() => {
+                        setAddBreakfast((add) => !add)
+                        setConfirmPaid(false)
+                    }}
+                >Want to add breakfast for {formatCurrency(optionalBreakfastPrice)}?</Checkbox>
+            </Box>
+        )}
         <Box>
             <Checkbox
                 id="confirm"
                 checked={confirmPaid}
                 disabled={confirmPaid || isCheckingIn}
                 onChange={() => setConfirmPaid((confirm) => !confirm)}
-            >I confirm that {guests.fullName} has paid the total amount of {formatCurrency(totalPrice)}</Checkbox>
+            >I confirm that {guests.fullName} has paid the total amount of {!addBreakfast ? formatCurrency(totalPrice)
+                : `${formatCurrency(totalPrice + optionalBreakfastPrice)} (${formatCurrency(totalPrice)} + ${formatCurrency(optionalBreakfastPrice)})`}</Checkbox>
         </Box>
 
       <ButtonGroup>

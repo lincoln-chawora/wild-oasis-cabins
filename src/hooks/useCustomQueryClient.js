@@ -1,7 +1,7 @@
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-export function useCustomQueryClient(qKey = 'cabins', mFn, successMessage = 'Transaction processed successfully') {
+export function useCustomQueryClient(qKey, mFn, successMessage = 'Transaction processed successfully') {
     const queryClient = useQueryClient();
 
     const {mutate, isLoading} = useMutation({
