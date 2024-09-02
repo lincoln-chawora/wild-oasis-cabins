@@ -5,7 +5,7 @@ import {PAGE_SIZE} from "../utils/constants.js";
 export async function getBookings({filter, sortBy, page}) {
    let query = supabase
       .from('bookings')
-      .select('*, cabins(name), guests(email)', {count: "exact"});
+      .select('*, cabins(name), guests(fullName, email)', {count: "exact"});
 
    if (filter) {
      query = query.eq(filter.field, filter.value);

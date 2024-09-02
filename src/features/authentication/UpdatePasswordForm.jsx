@@ -4,13 +4,14 @@ import Form from "../../ui/Form.jsx";
 import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
 
-import { useUpdateUser } from "./useUpdateUser";
+import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
+import {updateUser as updateUserApi} from "../../services/apiAuth.js";
 
 function UpdatePasswordForm() {
   const { register, handleSubmit, formState, getValues, reset } = useForm();
   const { errors } = formState;
 
-  const { updateUser, isUpdating } = useUpdateUser();
+  const {mutate: updateUser, isLoading: isUpdating} = useCustomQueryClient('user', updateUserApi, `Your password has been successfully updated.`)
 
   function onSubmit({ password }) {
     updateUser({ password }, { onSuccess: reset });
