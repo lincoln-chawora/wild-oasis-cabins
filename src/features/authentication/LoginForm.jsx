@@ -3,15 +3,16 @@ import Button from "../../ui/Button.jsx";
 import Form from "../../ui/Form.jsx";
 import Input from "../../ui/Input";
 import FormRowVertical from "../../ui/FormRowVertical.jsx";
-import {useLogin} from "./useLogin.js";
+import {useCustomUserQuery} from "./useCustomUserQuery.js";
 import Spinner from "../../ui/Spinner.jsx";
 import SpinnerMini from "../../ui/SpinnerMini.jsx";
+import {login as loginApi} from "../../services/apiAuth.js";
 
 function LoginForm() {
   const [email, setEmail] = useState("lincoln@example.com");
   const [password, setPassword] = useState("passw0rd");
 
-  const {login, isLoading} = useLogin();
+  const {mutate: login, isLoading} = useCustomUserQuery(loginApi);
 
   if (isLoading) return <Spinner />
 
