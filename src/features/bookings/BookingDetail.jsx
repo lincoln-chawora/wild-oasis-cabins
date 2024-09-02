@@ -10,11 +10,14 @@ import ButtonText from "../../ui/ButtonText.jsx";
 
 import { useMoveBack } from "../../hooks/useMoveBack.js";
 import {useCustomQuery} from "../../hooks/useCustomQuery.js";
-import {getBooking, updateBooking} from "../../services/apiBookings.js";
+import {deleteBooking, getBooking, updateBooking} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import {useNavigate, useParams} from "react-router-dom";
 import {HiArrowUpOnSquare} from "react-icons/hi2";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
+import {HiTrash} from "react-icons/hi";
+import Modal from "../../ui/Modal.jsx";
+import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -29,6 +32,12 @@ function BookingDetail() {
     const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingId});
 
     const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('booking', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+
+    const {
+        mutate: deleteBookingById,
+        isLoading: isDeleting
+    } = useCustomQueryClient('booking', deleteBooking, `Booking ${bookingId} successfully deleted.`)
+
 
     function handleCheckout() {
         const obj = {status: 'checked-out'};
@@ -65,6 +74,19 @@ function BookingDetail() {
           {status === 'checked-in' && (
               <Button disabled={isCheckingOut} onClick={handleCheckout} icon={<HiArrowUpOnSquare />}>Check out</Button>
           )}
+
+          <Modal>
+              <Modal.Open opens="delete-booking">
+                  <Button variation="danger" disabled={isDeleting} icon={<HiTrash />}>Delete booking</Button>
+              </Modal.Open>
+
+              <Modal.Content name="delete-booking">
+                  <ConfirmDelete resourceName={`booking #${bookingId}`} onConfirm={() => {
+                      deleteBookingById(bookingId);
+                      moveBack();
+                  }} isDeleting={isDeleting} />
+              </Modal.Content>
+          </Modal>
 
         <Button variation="secondary" onClick={moveBack}>
           Back
