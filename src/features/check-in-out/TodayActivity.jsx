@@ -2,6 +2,10 @@ import styled from "styled-components";
 
 import Heading from "../../ui/Heading";
 import Row from "../../ui/Row";
+import {useCustomQuery} from "../../hooks/useCustomQuery.js";
+import {getStaysTodayActivity} from "../../services/apiBookings.js";
+import Spinner from "../../ui/Spinner.jsx";
+import TodayItem from "./TodayItem";
 
 const StyledToday = styled.div`
   /* Box */
@@ -36,14 +40,22 @@ const NoActivity = styled.p`
   margin-top: 0.8rem;
 `;
 
-function Today() {
-  return (
-    <StyledToday>
-      <Row type="horizontal">
-        <Heading as="h2">Today</Heading>
-      </Row>
-    </StyledToday>
+function TodayActivity() {
+    const {result: activities, isLoading } = useCustomQuery('today-activity', getStaysTodayActivity);
+
+    return (
+        <StyledToday>
+            <Row type="horizontal">
+                <Heading as="h2">Today</Heading>
+            </Row>
+
+            {!isLoading ? activities?.length > 0 ? (
+                <TodayList>
+                    {activities.map(activity => <TodayItem key={activity.id} activity={activity} />)}
+                </TodayList>
+            ) : (<NoActivity>No Activity today</NoActivity>) : <Spinner />}
+        </StyledToday>
   );
 }
 
-export default Today;
+export default TodayActivity;
