@@ -2,7 +2,6 @@ import styled from "styled-components";
 import Logo from "./Logo.jsx";
 import MainNav from "./MainNav.jsx";
 import {HiArrowRight, HiX} from "react-icons/hi";
-import Uploader from "../data/Uploader.jsx";
 import ButtonIcon from "./ButtonIcon.jsx";
 
 const StyledSidebar = styled.aside`
@@ -24,7 +23,6 @@ export function Sidebar({isShowing, toggleSidebar}) {
             </ButtonIcon>
             <Logo />
             <MainNav />
-            <Uploader />
         </StyledSidebar>
     )
 }

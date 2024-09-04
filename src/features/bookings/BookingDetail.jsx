@@ -18,6 +18,7 @@ import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
 import {HiTrash} from "react-icons/hi";
 import Modal from "../../ui/Modal.jsx";
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
+import Empty from "../../ui/Empty.jsx";
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -45,6 +46,8 @@ function BookingDetail() {
     }
 
     if (isLoading) return <Spinner />;
+
+    if (!booking) return <Empty resource="Booking" />
 
     const {status, id} = booking;
 

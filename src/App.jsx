@@ -25,6 +25,14 @@ const queryClient = new QueryClient({
     }
 })
 
+/*
+ Features to add:
+ 1. Create new bookings in the app
+ 2. Edit booking
+ 3. Variable prices per day
+ 4.
+ */
+
 function App() {
   return (
       <DarkModeProvider>
