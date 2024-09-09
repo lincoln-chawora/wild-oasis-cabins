@@ -1,9 +1,9 @@
 import Button from "../../ui/Button.jsx";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
-import {updateBooking} from "../../services/apiBookings.js";
+import {createEditBooking} from "../../services/apiBookings.js";
 
 function CheckoutButton({ bookingId }) {
-    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('today-activity', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('today-activity', ({id, obj}) => createEditBooking(id, obj), `Guest has checked out.`)
 
     function handleCheckout() {
         const obj = {status: 'checked-out'};

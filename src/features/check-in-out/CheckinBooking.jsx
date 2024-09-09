@@ -9,7 +9,7 @@ import ButtonText from "../../ui/ButtonText.jsx";
 
 import { useMoveBack } from "../../hooks/useMoveBack.js";
 import {useCustomQuery} from "../../hooks/useCustomQuery.js";
-import {getBooking, updateBooking} from "../../services/apiBookings.js";
+import {getBooking, createEditBooking} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import {useNavigate, useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
@@ -32,7 +32,7 @@ function CheckinBooking() {
     const [addBreakfast, setAddBreakfast] = useState(false);
     const {bookingId: bookingID} = useParams();
     const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingID});
-    const {mutate: checkin, isLoading: isCheckingIn} = useCustomQueryClient('booking', ({id, obj}) => updateBooking(id, obj), `${booking?.guests?.fullName} has been checked in.`)
+    const {mutate: checkin, isLoading: isCheckingIn} = useCustomQueryClient('booking', ({id, obj}) => createEditBooking(id, obj), `${booking?.guests?.fullName} has been checked in.`)
 
     const {
         isLoading: isLoadingSettings,
@@ -112,7 +112,7 @@ function CheckinBooking() {
             <Checkbox
                 id="confirm"
                 checked={confirmPaid}
-                disabled={confirmPaid || isCheckingIn}
+                disabled={isPaid || isCheckingIn}
                 onChange={() => setConfirmPaid((confirm) => !confirm)}
             >I confirm that {guests.fullName} has paid the total amount of {!addBreakfast ? formatCurrency(totalPrice)
                 : `${formatCurrency(totalPrice + optionalBreakfastPrice)} (${formatCurrency(totalPrice)} + ${formatCurrency(optionalBreakfastPrice)})`}</Checkbox>

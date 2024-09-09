@@ -11,7 +11,7 @@ import {HiEye, HiTrash} from "react-icons/hi";
 import {useNavigate} from "react-router-dom";
 import {HiArrowDownOnSquare, HiArrowUpOnSquare} from "react-icons/hi2";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
-import {deleteBooking, updateBooking} from "../../services/apiBookings.js";
+import {deleteBooking, createEditBooking} from "../../services/apiBookings.js";
 import Modal from "../../ui/Modal.jsx";
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
 
@@ -58,7 +58,7 @@ function BookingRow({
 }) {
     const navigate = useNavigate();
 
-    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('bookings', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('bookings', ({id, obj}) => createEditBooking(id, obj), `Guest has checked out.`)
 
     const {
         mutate: deleteBookingById,

@@ -6,15 +6,15 @@ import UpdatePasswordForm from "../features/authentication/UpdatePasswordForm.js
 function Account() {
   return (
     <>
-      <Heading as="h1">Update your account</Heading>
+      <Heading as="h1">Your account</Heading>
 
       <Row>
-        <Heading as="h3">Update user data</Heading>
+        <Heading as="h2">Update user data</Heading>
         <UpdateUserDataForm />
       </Row>
 
       <Row>
-        <Heading as="h3">Update password</Heading>
+        <Heading as="h2">Update password</Heading>
         <UpdatePasswordForm />
       </Row>
     </>

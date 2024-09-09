@@ -10,15 +10,15 @@ import ButtonText from "../../ui/ButtonText.jsx";
 
 import { useMoveBack } from "../../hooks/useMoveBack.js";
 import {useCustomQuery} from "../../hooks/useCustomQuery.js";
-import {deleteBooking, getBooking, updateBooking} from "../../services/apiBookings.js";
+import {deleteBooking, getBooking, createEditBooking} from "../../services/apiBookings.js";
 import Spinner from "../../ui/Spinner.jsx";
 import {useNavigate, useParams} from "react-router-dom";
 import {HiArrowUpOnSquare} from "react-icons/hi2";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
-import {HiTrash} from "react-icons/hi";
 import Modal from "../../ui/Modal.jsx";
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
 import Empty from "../../ui/Empty.jsx";
+import CreateEditBookingForm from "./CreateEditBookingForm";
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -32,7 +32,7 @@ function BookingDetail() {
     const {bookingId} = useParams();
     const {result: booking, isLoading } = useCustomQuery('booking', getBooking, {id: bookingId});
 
-    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('booking', ({id, obj}) => updateBooking(id, obj), `Guest has checked out.`)
+    const {mutate: checkout, isLoading: isCheckingOut} = useCustomQueryClient('booking', ({id, obj}) => createEditBooking(id, obj), `Guest has checked out.`)
 
     const {
         mutate: deleteBookingById,
@@ -79,9 +79,17 @@ function BookingDetail() {
           )}
 
           <Modal>
-              <Modal.Open opens="delete-booking">
-                  <Button variation="danger" disabled={isDeleting} icon={<HiTrash />}>Delete booking</Button>
+              <Modal.Open opens="edit-booking">
+                  <Button variation="secondary" disabled={isDeleting}>Edit booking</Button>
               </Modal.Open>
+
+              <Modal.Open opens="delete-booking">
+                  <Button variation="danger" disabled={isDeleting}>Delete booking</Button>
+              </Modal.Open>
+
+              <Modal.Content name="edit-booking">
+                  <CreateEditBookingForm bookingToEdit={booking} />
+              </Modal.Content>
 
               <Modal.Content name="delete-booking">
                   <ConfirmDelete resourceName={`booking #${bookingId}`} onConfirm={() => {

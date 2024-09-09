@@ -15,10 +15,10 @@ const Form = styled.form`
   ${(props) =>
     props.type === "modal" &&
     css`
-      width: 80%;
+      height: 85vh;
     `}
     
-  overflow: hidden;
+  overflow: scroll;
   font-size: 1.4rem;
 `;
 

@@ -84,7 +84,7 @@ export async function getStaysAfterDate(date) {
   return {data};
 }
 
-// Activity means that there is a check in or a check out today
+// Activity means that there is a check in or a checkout today
 export async function getStaysTodayActivity() {
   const { data, error } = await supabase
     .from("bookings")
@@ -105,13 +105,22 @@ export async function getStaysTodayActivity() {
   return {data};
 }
 
-export async function updateBooking(id, obj) {
-  const { data, error } = await supabase
-    .from("bookings")
-    .update(obj)
+export async function createEditBooking(id, obj) {
+  let query = supabase.from('bookings');
+
+  // Create cabin.
+  if (!id) {
+    query = query.insert([{...obj}]);
+  }
+
+  if (id) {
+    query = query.update(obj)
     .eq("id", id)
-    .select()
-    .single();
+    .select();
+  }
+
+  // Get data from query.
+  const {data, error} = await query.select().single();
 
   if (error) {
     console.error(error);

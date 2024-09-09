@@ -2,7 +2,7 @@ import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {useNavigate} from "react-router-dom";
 
-export function useCustomQueryClient(qKey, mFn, successMessage = 'Transaction processed successfully', invalidateAllQueries = false) {
+export function useCustomQueryClient(qKey, mFn, successMessage = null, invalidateAllQueries = false) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -16,7 +16,9 @@ export function useCustomQueryClient(qKey, mFn, successMessage = 'Transaction pr
                 queryClient.invalidateQueries({
                     queryKey: [qKey]
                 }).then(() => {
-                    toast.success(successMessage);
+                    if (successMessage) {
+                        toast.success(successMessage);
+                    }
                 });
             }
         },
