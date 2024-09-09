@@ -9,54 +9,68 @@ import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
 import {createEditBooking} from "../../services/apiBookings.js";
 import {
     formatCurrency,
-    getDifference,
-    getDifferenceReversed,
-    objsAreTheSame
+    objsAreTheSame, subtractDates
 } from "../../utils/helpers.js";
 import {useEffect} from "react";
 import {StyledCheckbox} from "../../ui/Checkbox.jsx";
 import Heading from "../../ui/Heading.jsx";
-import {createEditGuest} from "../../services/apiGuests.js";
+import {createEditGuest, deleteGuest as deleteGuestApi} from "../../services/apiGuests.js";
+import {useCustomQuery} from "../../hooks/useCustomQuery.js";
+import {getSettings} from "../../services/apiSettings.js";
 
-function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
-    const { id: editId, cabins: cabinValues, guests: {id: guestId, ...guestValues} = {}, ...editValues } = bookingToEdit;
+function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
+    let { id: editId, cabins: cabinValues, guests: {id: guestId, ...guestValues} = {}, ...editValues } = bookingToEdit;
 
     const allBookingData = {...editValues, ...guestValues};
 
     const isEditSession = Boolean(editId);
 
     const {register, handleSubmit, reset, setValue, control, getValues, formState} = useForm({
-        defaultValues: isEditSession ? allBookingData : {}
+        defaultValues: isEditSession ? allBookingData : cabin ? cabin : {}
     });
 
     const {errors} = formState;
 
+    const {result: { breakfastPrice } = {}, isLoading: isLoadingSettings } = useCustomQuery('settings', getSettings);
     const {mutate: editBooking, isLoading: isEditingBooking} = useCustomQueryClient('booking', ({id, newBookingData}) => createEditBooking(id, newBookingData), `${getValues()?.fullName}'s booking has been successfully edited.`)
     const {mutate: editGuest, isLoading: isEditingGuest} = useCustomQueryClient('booking', ({id, newUserData}) => createEditGuest(id, newUserData))
-    const {mutate: createBooking, isLoading: isCreatingBooking} = useCustomQueryClient('bookings', createEditBooking, 'New booking successfully created.')
-    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', createEditGuest)
+    const {mutate: createBooking, isLoading: isCreatingBooking} = useCustomQueryClient('bookings', ({id, newBookingObj}) => createEditBooking(id, newBookingObj), 'New booking successfully created.')
+    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', ({id, newUserData}) => createEditGuest(id, newUserData))
+    const {mutate: deleteGuest, isLoading: isDeletingGuest} = useCustomQueryClient('guests', deleteGuestApi)
 
-    const isWorking = isCreatingBooking || isEditingBooking || isEditingGuest || isCreatingGuest;
+    const isWorking = isCreatingBooking || isEditingBooking || isEditingGuest || isCreatingGuest || isLoadingSettings || isDeletingGuest;
 
     // Watch the values of the cabinPrice and extrasPrice fields
-    const numNights = useWatch({ name: 'numNights', control });
-    const extrasPrice = useWatch({ name: 'extrasPrice', control });
+    const numNights = useWatch({ name: 'booking.numNights', control });
+    const extrasPrice = useWatch({ name: 'booking.extrasPrice', control });
+    const numGuests = useWatch({ name: 'booking.numGuests', control });
+    const hasBreakfast = useWatch({ name: 'booking.hasBreakfast', control });
+    const startDate = useWatch({ name: 'booking.startDate', control });
+    const endDate = useWatch({ name: 'booking.endDate', control });
+
+    if (cabin) {
+        cabinValues = cabin
+    }
 
     useEffect(() => {
         const totalDiscount = cabinValues?.discount * numNights;
-        const priceForNight = cabinValues?.regularPrice * numNights;
-        const totalPrice = priceForNight - totalDiscount + Number(extrasPrice);
+        const priceForNight = cabinValues?.regularPrice * (numNights || 0);
+        const totalPrice = (priceForNight || 0) - (totalDiscount || 0) + Number((extrasPrice || 0));
+        const extras = hasBreakfast ? (numNights || 0) * (breakfastPrice || 0) * (numGuests || 0) : 0;
 
         // Update totalPrice and cabinPrice whenever extrasPrice or numNight changes.
-        setValue('totalPrice', totalPrice);
-        setValue('cabinPrice', priceForNight);
-    }, [cabinValues, extrasPrice, setValue, numNights]);
+        setValue('booking.totalPrice', totalPrice);
+        setValue('booking.extrasPrice', extras);
+        setValue('booking.cabinPrice', priceForNight);
+        setValue('booking.numNights', Math.abs(subtractDates(startDate, endDate)));
+    }, [startDate, cabinValues, extrasPrice, setValue, numNights, numGuests, breakfastPrice, hasBreakfast, endDate]);
 
     function onSubmit(data) {
-        const newBookingData = getDifference(data, guestValues);
-        const newUserData = getDifferenceReversed(data, guestValues);
+        const newBookingData = data?.booking;
+        const newUserData = data?.user;
 
         if(isEditSession) {
+
             editBooking({id: editId, newBookingData}, {
                 onSuccess: () => {
                     if (!objsAreTheSame(guestValues, newUserData)) {
@@ -66,19 +80,23 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
                 },
             });
         } else {
-            createGuest({id: null, ...data}, {
+            createGuest({id: null, newUserData}, {
                 onSuccess: (data) => {
-                    console.log('New user', data)
-                    // reset();
-                    // onCloseModal?.();
+                    const createdUser = data;
+                    const newBookingObj = {cabinId: cabin.id, guestId: createdUser.id, ...newBookingData}
+
+                    createBooking({id: null, newBookingObj}, {
+                        onSuccess: () => {
+                            reset();
+                            onCloseModal?.();
+                        },
+                        onError: () => {
+                            // If the booking is not able to be created, delete the user that was created previously.
+                            deleteGuest(createdUser.id);
+                        }
+                    });
                 },
             });
-            // createBooking({id: null, ...data}, {
-            //     onSuccess: () => {
-            //         reset();
-            //         onCloseModal?.();
-            //     },
-            // });
         }
     }
 
@@ -87,7 +105,6 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
         console.log('Error status', getValues().status)
     }
 
-
     return (
         <Form onSubmit={handleSubmit(onSubmit, onError)} type={onCloseModal? 'modal' : 'regular'}>
             <Heading as="h2">{isEditSession ? 'Editing this' : 'Create new'} booking</Heading>
@@ -95,13 +112,13 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
 
             <Heading as="h3">Guest Info</Heading>
             <FormRow label="Guest Full name" error={errors?.fullName?.message}>
-                <Input type="text" id="fullName" disabled={isWorking} {...register("fullName", {
+                <Input type="text" id="fullName" disabled={isWorking} {...register("user.fullName", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
             <FormRow label="Email address" error={errors?.email?.message}>
-                <Input type="email" id="email" disabled={isWorking} {...register("email",
+                <Input type="email" id="email" disabled={isWorking} {...register("user.email",
                     { required: "This field is required", pattern: {
                             value: /\S+@\S+\.\S+/,
                             message: 'Please provide a valid email address'
@@ -109,32 +126,32 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
             </FormRow>
 
             <FormRow label="National ID" error={errors?.nationalID?.message}>
-                <Input type="text" id="nationalID" disabled={isWorking} {...register("nationalID", {
+                <Input type="text" id="nationalID" disabled={isWorking} {...register("user.nationalID", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
-            <FormRow label="Nationality" error={errors?.nationality?.message}>
-                <Input type="text" id="nationality" disabled={isWorking} {...register("nationality", {
+            <FormRow label="Nationality" error={errors?.booking?.nationality?.message}>
+                <Input type="text" id="nationality" disabled={isWorking} {...register("user.nationality", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
             <Heading as="h3">Booking Info</Heading>
-            <FormRow label="Start date" error={errors?.startDate?.message}>
-                <Input type="datetime-local" id="startDate" disabled={isWorking} {...register("startDate", {
+            <FormRow label="Start date" error={errors?.booking?.startDate?.message}>
+                <Input type="datetime-local" id="startDate" disabled={isWorking} {...register("booking.startDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
 
             <FormRow label="End date" error={errors?.endDate?.message}>
-                <Input type="datetime-local" id="endDate" disabled={isWorking} {...register("endDate", {
+                <Input type="datetime-local" id="endDate" disabled={isWorking} {...register("booking.endDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
 
-            <FormRow label="Number of nights" error={errors?.numNights?.message}>
-              <Input type="number" id="numNights" disabled={isWorking} {...register("numNights", {
+            <FormRow label="Number of nights" error={errors?.booking?.numNights?.message}>
+              <Input type="number" id="numNights" disabled {...register("booking.numNights", {
                   required: "This field is required",
                   min: {
                       value: 1,
@@ -143,8 +160,8 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
               })} />
             </FormRow>
 
-            <FormRow label="Number of guests" error={errors?.numGuests?.message}>
-              <Input type="number" id="numGuests" disabled={isWorking} {...register("numGuests", {
+            <FormRow label="Number of guests" error={errors?.booking?.numGuests?.message}>
+              <Input type="number" id="numGuests" disabled={isWorking} {...register("booking.numGuests", {
                   required: "This field is required",
                   min: {
                       value: 1,
@@ -153,21 +170,27 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
               })} />
             </FormRow>
 
-            <FormRow label="Cabin price" error={errors?.cabinPrice?.message}>
-                <Input type="number" id="cabinPrice" disabled {...register("cabinPrice", {
+            <FormRow label="Include breakfast" error={errors?.booking?.hasBreakfast?.message}>
+                <StyledCheckbox>
+                    <Input type="checkbox" id="hasBreakfast" disabled={isWorking} {...register("booking.hasBreakfast")} />
+                </StyledCheckbox>
+            </FormRow>
+
+            <FormRow label="Cabin price" error={errors?.booking?.cabinPrice?.message}>
+                <Input type="number" id="cabinPrice" disabled {...register("booking.cabinPrice", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
             <FormRow label="Extras price" error={errors?.extrasPrice?.message}>
-              <Input type="number" id="extrasPrice" disabled={isWorking} {...register("extrasPrice", {
+              <Input type="number" id="extrasPrice" disabled={isWorking} {...register("booking.extrasPrice", {
                   required: "This field is required",
               })} />
             </FormRow>
 
-            <FormRow label="Total price" error={errors?.totalPrice?.message}>
+            <FormRow label="Total price" error={errors?.booking?.totalPrice?.message}>
                 <>
-                  <Input type="number" id="totalPrice" disabled {...register("totalPrice", {
+                  <Input type="number" id="totalPrice" disabled {...register("booking.totalPrice", {
                       required: "This field is required",
                   })} />
 
@@ -175,8 +198,8 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
                 </>
             </FormRow>
 
-            <FormRow label="Booking status" error={errors?.status?.message}>
-                <StyledSelect {...register("status", {
+            <FormRow label="Booking status" error={errors?.booking?.status?.message}>
+                <StyledSelect {...register("booking.status", {
                     required: "This field is required",
                 })}>
                     {[
@@ -191,21 +214,14 @@ function CreateEditBookingForm({bookingToEdit = {}, onCloseModal}) {
                 </StyledSelect>
             </FormRow>
 
-
-            <FormRow label="Has breakfast" error={errors?.hasBreakfast?.message}>
-                <StyledCheckbox>
-                    <Input type="checkbox" id="hasBreakfast" disabled={isWorking} {...register("hasBreakfast")} />
-                </StyledCheckbox>
-            </FormRow>
-
             <FormRow label="Has paid" error={errors?.isPaid?.message}>
                 <StyledCheckbox>
-                    <Input type="checkbox" id="isPaid" disabled={isWorking} {...register("isPaid")} />
+                    <Input type="checkbox" id="isPaid" disabled={isWorking} {...register("booking.isPaid")} />
                 </StyledCheckbox>
             </FormRow>
 
             <FormRow label="Booking details" error={errors?.observations?.message}>
-              <Textarea type="text" id="observations" disabled={isWorking} defaultValue="" {...register("observations")}/>
+              <Textarea type="text" id="observations" disabled={isWorking} defaultValue="" {...register("booking.observations")}/>
             </FormRow>
 
             <FormRow>

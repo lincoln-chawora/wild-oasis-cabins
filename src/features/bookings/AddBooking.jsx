@@ -2,7 +2,7 @@ import Button from "../../ui/Button.jsx";
 import Modal from "../../ui/Modal.jsx";
 import CreateEditBookingForm from "./CreateEditBookingForm.jsx";
 
-export function AddBooking() {
+export default function AddBooking() {
     return (
         <div>
             {/* Main modal component, children include open button and content which the button opens. */}

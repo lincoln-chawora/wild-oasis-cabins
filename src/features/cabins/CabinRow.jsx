@@ -4,11 +4,12 @@ import {createEditCabin, deleteCabin} from "../../services/apiCabins.js";
 import CreateEditCabinForm from "./CreateEditCabinForm.jsx";
 import {useCustomQueryClient} from "../../hooks/useCustomQueryClient.js";
 import {HiSquare2Stack} from "react-icons/hi2";
-import {HiPencil, HiTrash} from "react-icons/hi";
+import {HiAdjustments, HiPencil, HiTrash} from "react-icons/hi";
 import Modal from "../../ui/Modal.jsx";
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
 import Table from "../../ui/Table.jsx";
 import Menus from "../../ui/Menus.jsx";
+import CreateEditBookingForm from "../bookings/CreateEditBookingForm.jsx";
 
 const Img = styled.img`
   display: block;
@@ -88,11 +89,15 @@ function CabinRow({cabin}) {
                             <Menus.Button icon={<HiSquare2Stack />} disabled={isCreating} onClick={handleDuplicate}>Duplicate</Menus.Button>
 
                             <Modal.Open opens="edit-cabin-form">
-                                <Menus.Button icon={<HiPencil />}>Edit</Menus.Button>
+                                <Menus.Button icon={<HiAdjustments />}>Edit</Menus.Button>
                             </Modal.Open>
 
                             <Modal.Open opens="delete-cabin-confirmation">
                                 <Menus.Button icon={<HiTrash />}>Delete</Menus.Button>
+                            </Modal.Open>
+
+                            <Modal.Open opens="booking-form">
+                                <Menus.Button icon={<HiPencil />}>Book cabin</Menus.Button>
                             </Modal.Open>
                         </Menus.List>
                     </Menus.Menu>
@@ -103,6 +108,10 @@ function CabinRow({cabin}) {
 
                     <Modal.Content name="delete-cabin-confirmation">
                         <ConfirmDelete resourceName={name} onConfirm={() => deleteCabinById(cabinId)} isDeleting={isDeleting} />
+                    </Modal.Content>
+
+                    <Modal.Content name="booking-form">
+                        <CreateEditBookingForm cabin={cabin} />
                     </Modal.Content>
                 </Modal>
             </div>

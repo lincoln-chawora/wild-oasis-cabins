@@ -31,46 +31,6 @@ export const formatCurrency = (value) =>
     value
   );
 
-export const getDifference = (a, b) => {
-  const diff = {};
-
-  // Get all keys from both objects
-  const keys1 = Object.keys(a);
-  const keys2 = Object.keys(b);
-
-  // Find properties that exist in obj1 but not in obj2
-  keys1.forEach((key) => {
-    if (!(key in b)) {
-      diff[key] = a[key];
-    }
-  });
-
-  // Find properties that exist in obj2 but not in obj1, but only include the values from obj1
-  keys2.forEach((key) => {
-    if (!(key in a)) {
-      // Only add if the key exists in a
-      if (key in a) {
-        diff[key] = a[key];
-      }
-    }
-  });
-
-  return diff;
-};
-
-export const getDifferenceReversed = (a, b) => {
-  const result = {};
-
-  // Get keys from obj1 and check if they exist in obj2
-  Object.keys(a).forEach((key) => {
-    if (key in b) {
-      result[key] = a[key];  // Use values from obj1
-    }
-  });
-
-  return result;
-}
-
 export const objsAreTheSame = (a, b) => {
   const keys1 = Object.keys(a);
   const keys2 = Object.keys(b);
