@@ -111,7 +111,7 @@ function CabinRow({cabin}) {
                     </Modal.Content>
 
                     <Modal.Content name="booking-form">
-                        <CreateEditBookingForm cabin={cabin} />
+                        <CreateEditBookingForm cabinToBook={cabin} />
                     </Modal.Content>
                 </Modal>
             </div>

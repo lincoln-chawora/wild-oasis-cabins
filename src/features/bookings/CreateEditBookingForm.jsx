@@ -17,8 +17,9 @@ import Heading from "../../ui/Heading.jsx";
 import {createEditGuest, deleteGuest as deleteGuestApi} from "../../services/apiGuests.js";
 import {useCustomQuery} from "../../hooks/useCustomQuery.js";
 import {getSettings} from "../../services/apiSettings.js";
+import {addDays} from "date-fns";
 
-function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
+function CreateEditBookingForm({bookingToEdit = {}, cabinToBook = {}, onCloseModal}) {
     let { id: editId, cabins: cabinValues, guests: {id: guestId, ...guestValues} = {}, ...editValues } = bookingToEdit;
 
     const allBookingData = {...editValues, ...guestValues};
@@ -26,16 +27,16 @@ function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
     const isEditSession = Boolean(editId);
 
     const {register, handleSubmit, reset, setValue, control, getValues, formState} = useForm({
-        defaultValues: isEditSession ? allBookingData : cabin ? cabin : {}
+        defaultValues: isEditSession ? allBookingData : cabinToBook ? cabinToBook : {}
     });
 
     const {errors} = formState;
 
-    const {result: { breakfastPrice } = {}, isLoading: isLoadingSettings } = useCustomQuery('settings', getSettings);
+    const {result: { breakfastPrice, minBookingLength} = {}, isLoading: isLoadingSettings } = useCustomQuery('settings', getSettings);
     const {mutate: editBooking, isLoading: isEditingBooking} = useCustomQueryClient('booking', ({id, newBookingData}) => createEditBooking(id, newBookingData), `${getValues()?.fullName}'s booking has been successfully edited.`)
-    const {mutate: editGuest, isLoading: isEditingGuest} = useCustomQueryClient('booking', ({id, newUserData}) => createEditGuest(id, newUserData))
+    const {mutate: editGuest, isLoading: isEditingGuest} = useCustomQueryClient('booking', ({id, newGuestData}) => createEditGuest(id, newGuestData))
     const {mutate: createBooking, isLoading: isCreatingBooking} = useCustomQueryClient('bookings', ({id, newBookingObj}) => createEditBooking(id, newBookingObj), 'New booking successfully created.')
-    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', ({id, newUserData}) => createEditGuest(id, newUserData))
+    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', ({id, newGuestData}) => createEditGuest(id, newGuestData))
     const {mutate: deleteGuest, isLoading: isDeletingGuest} = useCustomQueryClient('guests', deleteGuestApi)
 
     const isWorking = isCreatingBooking || isEditingBooking || isEditingGuest || isCreatingGuest || isLoadingSettings || isDeletingGuest;
@@ -48,8 +49,8 @@ function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
     const startDate = useWatch({ name: 'booking.startDate', control });
     const endDate = useWatch({ name: 'booking.endDate', control });
 
-    if (cabin) {
-        cabinValues = cabin
+    if (cabinToBook) {
+        cabinValues = cabinToBook
     }
 
     useEffect(() => {
@@ -58,32 +59,31 @@ function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
         const totalPrice = (priceForNight || 0) - (totalDiscount || 0) + Number((extrasPrice || 0));
         const extras = hasBreakfast ? (numNights || 0) * (breakfastPrice || 0) * (numGuests || 0) : 0;
 
-        // Update totalPrice and cabinPrice whenever extrasPrice or numNight changes.
+        // Update the values below whenever the watched values change.
         setValue('booking.totalPrice', totalPrice);
         setValue('booking.extrasPrice', extras);
         setValue('booking.cabinPrice', priceForNight);
-        setValue('booking.numNights', Math.abs(subtractDates(startDate, endDate)));
+        setValue('booking.numNights', Math.abs(subtractDates(startDate || new Date().toISOString(), endDate || new Date().toISOString())));
     }, [startDate, cabinValues, extrasPrice, setValue, numNights, numGuests, breakfastPrice, hasBreakfast, endDate]);
 
     function onSubmit(data) {
         const newBookingData = data?.booking;
-        const newUserData = data?.user;
+        const newGuestData = data?.guest;
 
         if(isEditSession) {
-
             editBooking({id: editId, newBookingData}, {
                 onSuccess: () => {
-                    if (!objsAreTheSame(guestValues, newUserData)) {
-                        editGuest({id: newBookingData.guestId, newUserData});
+                    if (!objsAreTheSame(guestValues, newGuestData)) {
+                        editGuest({id: newBookingData.guestId, newGuestData});
                     }
                     onCloseModal?.();
                 },
             });
         } else {
-            createGuest({id: null, newUserData}, {
+            createGuest({id: null, newGuestData}, {
                 onSuccess: (data) => {
                     const createdUser = data;
-                    const newBookingObj = {cabinId: cabin.id, guestId: createdUser.id, ...newBookingData}
+                    const newBookingObj = {cabinId: cabinToBook.id, guestId: createdUser.id, ...newBookingData}
 
                     createBooking({id: null, newBookingObj}, {
                         onSuccess: () => {
@@ -91,7 +91,7 @@ function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
                             onCloseModal?.();
                         },
                         onError: () => {
-                            // If the booking is not able to be created, delete the user that was created previously.
+                            // If the booking is not able to be created, delete the guest that was created previously.
                             deleteGuest(createdUser.id);
                         }
                     });
@@ -102,50 +102,49 @@ function CreateEditBookingForm({bookingToEdit = {}, cabin = {}, onCloseModal}) {
 
     function onError(error) {
         console.log('Error Main', error)
-        console.log('Error status', getValues().status)
+        console.log('Error status', getValues())
     }
 
     return (
         <Form onSubmit={handleSubmit(onSubmit, onError)} type={onCloseModal? 'modal' : 'regular'}>
             <Heading as="h2">{isEditSession ? 'Editing this' : 'Create new'} booking</Heading>
 
-
             <Heading as="h3">Guest Info</Heading>
-            <FormRow label="Guest Full name" error={errors?.fullName?.message}>
-                <Input type="text" id="fullName" disabled={isWorking} {...register("user.fullName", {
+            <FormRow label="Guest Full name" error={errors?.guest?.fullName?.message}>
+                <Input type="text" id="fullName" disabled={isWorking} {...register("guest.fullName", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
-            <FormRow label="Email address" error={errors?.email?.message}>
-                <Input type="email" id="email" disabled={isWorking} {...register("user.email",
+            <FormRow label="Email address" error={errors?.guest?.email?.message}>
+                <Input type="email" id="email" disabled={isWorking} {...register("guest.email",
                     { required: "This field is required", pattern: {
                             value: /\S+@\S+\.\S+/,
                             message: 'Please provide a valid email address'
                         }})} />
             </FormRow>
 
-            <FormRow label="National ID" error={errors?.nationalID?.message}>
-                <Input type="text" id="nationalID" disabled={isWorking} {...register("user.nationalID", {
+            <FormRow label="National ID" error={errors?.guest?.nationalID?.message}>
+                <Input type="text" id="nationalID" disabled={isWorking} {...register("guest.nationalID", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
-            <FormRow label="Nationality" error={errors?.booking?.nationality?.message}>
-                <Input type="text" id="nationality" disabled={isWorking} {...register("user.nationality", {
+            <FormRow label="Nationality" error={errors?.guest?.nationality?.message}>
+                <Input type="text" id="nationality" disabled={isWorking} {...register("guest.nationality", {
                     required: "This field is required",
                 })} />
             </FormRow>
 
             <Heading as="h3">Booking Info</Heading>
             <FormRow label="Start date" error={errors?.booking?.startDate?.message}>
-                <Input type="datetime-local" id="startDate" disabled={isWorking} {...register("booking.startDate", {
+                <Input type="datetime-local" id="startDate" min={new Date().toISOString().slice(0, -8)} disabled={isWorking} {...register("booking.startDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
 
             <FormRow label="End date" error={errors?.endDate?.message}>
-                <Input type="datetime-local" id="endDate" disabled={isWorking} {...register("booking.endDate", {
+                <Input type="datetime-local" id="endDate" min={addDays(new Date(), minBookingLength || 4).toISOString().slice(0, -8)} disabled={isWorking} {...register("booking.endDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
