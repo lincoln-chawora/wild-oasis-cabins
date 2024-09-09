@@ -13,7 +13,7 @@ import CreateEditBookingForm from "../bookings/CreateEditBookingForm.jsx";
 
 const Img = styled.img`
   display: block;
-  width: ${(props) => props.size == 'small' ? '6.4rem' : '30rem'};
+  width: ${(props) => props.$size == 'small' ? '6.4rem' : '30rem'};
   aspect-ratio: 3 / 2;
   object-fit: cover;
   object-position: center;
@@ -74,7 +74,7 @@ function CabinRow({cabin}) {
                         <Img title="Enlarge image" src={image} />
                     </Modal.Open>
                     <Modal.Content name="cabin-image">
-                        <Img size="large" src={image} />
+                        <Img $size="large" src={image} />
                     </Modal.Content>
         </Modal>
             <Cabin>{name}</Cabin>

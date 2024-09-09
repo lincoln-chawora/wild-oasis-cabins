@@ -20,14 +20,14 @@ import {getSettings} from "../../services/apiSettings.js";
 import {addDays} from "date-fns";
 
 function CreateEditBookingForm({bookingToEdit = {}, cabinToBook = {}, onCloseModal}) {
-    let { id: editId, cabins: cabinValues, guests: {id: guestId, ...guestValues} = {}, ...editValues } = bookingToEdit;
+    let { id: editId, cabins: cabinValues, guests: {...guestValues} = {}, ...editValues } = bookingToEdit;
 
-    const allBookingData = {...editValues, ...guestValues};
+    const defaultFormData = {...editValues, ...guestValues};
 
     const isEditSession = Boolean(editId);
 
     const {register, handleSubmit, reset, setValue, control, getValues, formState} = useForm({
-        defaultValues: isEditSession ? allBookingData : cabinToBook ? cabinToBook : {}
+        defaultValues: isEditSession ? defaultFormData : cabinToBook ? cabinToBook : {}
     });
 
     const {errors} = formState;
@@ -36,8 +36,8 @@ function CreateEditBookingForm({bookingToEdit = {}, cabinToBook = {}, onCloseMod
     const {mutate: editBooking, isLoading: isEditingBooking} = useCustomQueryClient('booking', ({id, newBookingData}) => createEditBooking(id, newBookingData), `${getValues()?.fullName}'s booking has been successfully edited.`)
     const {mutate: editGuest, isLoading: isEditingGuest} = useCustomQueryClient('booking', ({id, newGuestData}) => createEditGuest(id, newGuestData))
     const {mutate: createBooking, isLoading: isCreatingBooking} = useCustomQueryClient('bookings', ({id, newBookingObj}) => createEditBooking(id, newBookingObj), 'New booking successfully created.')
-    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', ({id, newGuestData}) => createEditGuest(id, newGuestData))
-    const {mutate: deleteGuest, isLoading: isDeletingGuest} = useCustomQueryClient('guests', deleteGuestApi)
+    const {mutate: createGuest, isLoading: isCreatingGuest} = useCustomQueryClient('bookings', ({id, newGuestData}) => createEditGuest(id, newGuestData));
+    const {mutate: deleteGuest, isLoading: isDeletingGuest} = useCustomQueryClient('booking', deleteGuestApi);
 
     const isWorking = isCreatingBooking || isEditingBooking || isEditingGuest || isCreatingGuest || isLoadingSettings || isDeletingGuest;
 
@@ -138,13 +138,13 @@ function CreateEditBookingForm({bookingToEdit = {}, cabinToBook = {}, onCloseMod
 
             <Heading as="h3">Booking Info</Heading>
             <FormRow label="Start date" error={errors?.booking?.startDate?.message}>
-                <Input type="datetime-local" id="startDate" min={new Date().toISOString().slice(0, -8)} disabled={isWorking} {...register("booking.startDate", {
+                <Input type="datetime-local" id="startDate" disabled={isWorking} min={new Date().toISOString().slice(0, -8)}  {...register("booking.startDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
 
             <FormRow label="End date" error={errors?.endDate?.message}>
-                <Input type="datetime-local" id="endDate" min={addDays(new Date(), minBookingLength || 4).toISOString().slice(0, -8)} disabled={isWorking} {...register("booking.endDate", {
+                <Input type="datetime-local" id="endDate" disabled={isWorking} min={addDays(new Date(), minBookingLength || 4).toISOString().slice(0, -8)} {...register("booking.endDate", {
                     required: "This field is required"
                 })} />
             </FormRow>
@@ -224,7 +224,7 @@ function CreateEditBookingForm({bookingToEdit = {}, cabinToBook = {}, onCloseMod
             </FormRow>
 
             <FormRow>
-                <Button variation="secondary" type="reset" onClick={() => onCloseModal?.()}>Cancel</Button>
+                <Button $variation="secondary" type="reset" onClick={() => onCloseModal?.()}>Cancel</Button>
                 <Button disabled={isWorking}>
                     {isWorking ? 'Processing...' : isEditSession ? 'Edit booking' : 'Create new booking'}
                 </Button>

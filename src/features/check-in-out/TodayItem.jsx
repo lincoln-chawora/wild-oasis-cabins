@@ -35,7 +35,7 @@ export default function TodayItem({activity}) {
             <Guest>{guests.fullName}</Guest>
             <div>{numNights} nights</div>
 
-            {status === 'unconfirmed' && <Button as={Link} to={`/checkin/${id}`} size='small' variation="primary">Check in</Button>}
+            {status === 'unconfirmed' && <Button as={Link} to={`/checkin/${id}`} size='small' $variation="primary">Check in</Button>}
             {status === 'checked-in' && <CheckoutButton bookingId={id} />}
         </StyledTodayItem>
     )

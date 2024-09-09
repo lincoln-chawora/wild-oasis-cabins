@@ -1,12 +1,12 @@
 import {Outlet} from "react-router-dom";
 import {Header} from "./Header";
 import {Sidebar} from "./Sidebar";
-import styled from "styled-components";
+import styled, {css} from "styled-components";
 import {useState} from "react";
 
 const StyledAppLayout = styled.div`
   display: grid;
-  grid-template-columns: ${(props) => props.isShowing ? '26rem' : '1rem'} 1fr;
+  ${props => props.$isShowing ? css`grid-template-columns: 26rem 1fr;` : css`grid-template-columns: 1rem 1fr;`}
   grid-template-rows: auto 1fr;
   height: 100vh;
 `
@@ -29,7 +29,7 @@ export function AppLayout() {
     const [isShowing, setIsShowing] = useState(false);
 
     return (
-        <StyledAppLayout isShowing={isShowing}>
+        <StyledAppLayout $isShowing={isShowing}>
             <Header />
             <Sidebar isShowing={isShowing} toggleSidebar={setIsShowing} />
             <Main>

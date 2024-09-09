@@ -100,7 +100,7 @@ function CreateEditCabinForm({cabinToEdit = {}, onCloseModal}) {
             </FormRow>
 
             <FormRow>
-                <Button variation="secondary" type="reset" onClick={() => onCloseModal?.()}>Cancel</Button>
+                <Button $variation="secondary" type="reset" onClick={() => onCloseModal?.()}>Cancel</Button>
                 <Button disabled={isWorking}>
                     {isWorking ? 'Processing...' : isEditSession ? 'Edit cabin' : 'Create new cabin'}
                 </Button>
